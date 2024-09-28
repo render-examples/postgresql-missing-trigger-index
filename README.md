@@ -1,6 +1,8 @@
-# Database Schema Creation and Data Loading
+# PostgreSQL Trigger + Missing Index Demonstration
 
-This project includes scripts to create the necessary database schema and load sample data for the application.
+This repository is an interactive demonstration of a performance pitfall common in many PostgreSQL schemas as described in [TODO - BLOG POST LINK - TODO](TODO).
+
+TL;DR: The deletion of a record that can cascade over other tables can take an unintuitive amount of time if there are no indexes on foreign key relationships **in both directions**. This repository contains scripts to create a sample schema and generate enough data to show the contrast in performance with and without these indexes.
 
 ## Prerequisites
 
@@ -22,7 +24,7 @@ You can also spin up a test PostgreSQL instance on Render using the [Blueprint](
 
 ## Running the simulation
 
-The following steps will create a test schema, generate fake data, and run queries with and without an index to demonstrate a stark difference in performance.
+The following steps will create a test schema, generate fake data, and run a specific deletion with and without an index.
 
 1. Run the `create-schema.sh` script to create the database schema:
 
@@ -30,12 +32,7 @@ The following steps will create a test schema, generate fake data, and run queri
    ./create-schema.sh
    ```
 
-   This script will create the following tables:
-   - `users`
-   - `articles`
-   - `comments`
-
-   If the tables already exist, they will be dropped and recreated.
+   If the target tables already exist, they will be dropped and recreated.
 
 2. After the schema is created successfully, run the `generate-data.sh` script to populate the tables with sample data:
 
@@ -45,7 +42,7 @@ The following steps will create a test schema, generate fake data, and run queri
 
    This script will prompt you for various parameters to customize the data generation process.
 
-3. Follow the prompts in the `generate-data.sh` script to specify the amount and distribution of data you want to generate. Here are the exact questions you'll be asked, along with sample values that will generate approximately 1,000 users, 25,000 articles, and 13 million comments, which match the test values in the [associated blog post](TODO):
+3. Follow the prompts in the `generate-data.sh` script to specify the amount and distribution of data you want to generate. Here are the exact questions you'll be asked, along with sample values that will generate approximately 1,000 users, 25,000 articles, and 13 million comments, which match the test values we used for the query plans/timings in the blog post:
 
    - How many users would you like to insert? [1000]: 1000
    - What percentage of the 1000 users should be active authors? [10]: 100
@@ -58,7 +55,7 @@ The following steps will create a test schema, generate fake data, and run queri
    - What should be the standard deviation for the number of comments per article? [2]: 100
    - What's the maximum number of comments an article can have? [10]: 1000
 
-   The insertion process might take a while for larger insertions. With the sample values provided above, inserting the comments (approximately 13 million rows) take just over 3 minutes and consumes ~3GB of disk. Please be patient and allow the script to complete its execution.
+   The insertion process might take a while for larger insertions. With the sample values provided above, inserting the comments (approximately 13 million rows) takes just over 3 minutes and consumes ~3GB of disk space. Please be patient and allow the script to complete its execution.
 
 4. After generating the data, run the `delete.sh` script to select and delete a user with many related records:
 
@@ -66,7 +63,7 @@ The following steps will create a test schema, generate fake data, and run queri
    ./delete.sh
    ```
 
-   This script will find the user with the most articles that have comments, and perform a cascade delete. The deletion process should be relatively slow due to the lack of indexes.
+   This script will find the user with the most articles that have comments, and perform a cascade delete. The deletion process should be relatively slow due to the lack of indexes. Note the execution time for comparison.
 
 5. Now, apply the indexes by running the `create-index.sh` script:
 
@@ -80,6 +77,6 @@ The following steps will create a test schema, generate fake data, and run queri
    ./delete.sh
    ```
 
-   This time, the deletion process should be significantly faster (potentially orders of magnitude) due to the presence of indexes.
+   This time, the deletion process should be significantly faster (potentially orders of magnitude) due to the presence of indexes. Compare the execution time with the previous run to see the dramatic improvement.
 
 By comparing the execution times and EXPLAIN ANALYZE output from the two runs of `delete.sh`, you can observe the dramatic performance improvement that proper indexing can provide for cascade delete operations in a relational database.
