@@ -50,6 +50,9 @@ echo "📊 Preparing to insert users...
 if check_and_confirm "users"; then
     NUM_USERS=$(get_input "How many users would you like to insert?" 1000)
     echo ""
+    echo "About to insert $NUM_USERS users."
+    read -p "Press Enter to continue or Ctrl+C to cancel..."
+    echo ""
 
     SQL_INSERT_USERS="
     WITH inserted AS (
