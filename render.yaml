@@ -1,5 +1,5 @@
 databases:
   - name: postgresql-missing-trigger-index
     plan: free
-    databaseName: postgresql-missing-trigger-index
+    databaseName: example
     user: example
