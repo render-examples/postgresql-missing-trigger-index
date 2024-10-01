@@ -74,8 +74,8 @@ if check_and_confirm "users"; then
 echo "📝 Preparing to insert articles...
 ====================================="
 if check_and_confirm "articles"; then
-    ACTIVE_AUTHORS_PERCENT=$(get_input "What percentage of the $TOTAL_USERS users should be active authors?" 10)
-    ARTICLES_PER_AUTHOR_MEAN=$(get_input "On average, how many articles should each active author write?" 25)
+    ACTIVE_AUTHORS_PERCENT=$(get_input "What percentage of the $TOTAL_USERS users should be active authors?" 100)
+    ARTICLES_PER_AUTHOR_MEAN=$(get_input "On average, how many articles should each active author write?" 20)
     ARTICLES_PER_AUTHOR_STDDEV=$(get_input "What should be the standard deviation for the number of articles per author?" 5)
     ARTICLES_PER_AUTHOR_MAX=$(get_input "What's the maximum number of articles an author can write?" $((2 * ARTICLES_PER_AUTHOR_MEAN)))
     echo ""
@@ -118,10 +118,10 @@ if check_and_confirm "articles"; then
 echo "💬 Preparing to insert comments...
 ====================================="
 if check_and_confirm "comments"; then
-    ACTIVE_COMMENTERS_PERCENT=$(get_input "What percentage of the $TOTAL_USERS users should be active commenters?" 40)
-    ARTICLES_WITH_COMMENTS_PERCENT=$(get_input "What percentage of the $TOTAL_ARTICLES articles should have comments?" 20)
-    COMMENTS_PER_ARTICLE_MEAN=$(get_input "On average, how many comments should each article with comments have?" 5)
-    COMMENTS_PER_ARTICLE_STDDEV=$(get_input "What should be the standard deviation for the number of comments per article?" 2)
+    ACTIVE_COMMENTERS_PERCENT=$(get_input "What percentage of the $TOTAL_USERS users should be active commenters?" 100)
+    ARTICLES_WITH_COMMENTS_PERCENT=$(get_input "What percentage of the $TOTAL_ARTICLES articles should have comments?" 100)
+    COMMENTS_PER_ARTICLE_MEAN=$(get_input "On average, how many comments should each article with comments have?" 125)
+    COMMENTS_PER_ARTICLE_STDDEV=$(get_input "What should be the standard deviation for the number of comments per article?" 25)
     COMMENTS_PER_ARTICLE_MAX=$(get_input "What's the maximum number of comments an article can have?" $((2 * COMMENTS_PER_ARTICLE_MEAN)))
     echo ""
     
