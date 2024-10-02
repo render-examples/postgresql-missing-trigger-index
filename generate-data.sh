@@ -120,7 +120,7 @@ echo "💬 Preparing to insert comments...
 if check_and_confirm "comments"; then
     ACTIVE_COMMENTERS_PERCENT=$(get_input "What percentage of the $TOTAL_USERS users should be active commenters?" 100)
     ARTICLES_WITH_COMMENTS_PERCENT=$(get_input "What percentage of the $TOTAL_ARTICLES articles should have comments?" 100)
-    COMMENTS_PER_ARTICLE_MEAN=$(get_input "On average, how many comments should each article with comments have?" 125)
+    COMMENTS_PER_ARTICLE_MEAN=$(get_input "On average, how many comments should each article with comments have?" 75)
     COMMENTS_PER_ARTICLE_STDDEV=$(get_input "What should be the standard deviation for the number of comments per article?" 25)
     COMMENTS_PER_ARTICLE_MAX=$(get_input "What's the maximum number of comments an article can have?" $((2 * COMMENTS_PER_ARTICLE_MEAN)))
     echo ""

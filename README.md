@@ -40,9 +40,35 @@ The following steps will create a test schema, generate fake data, and run a spe
    ./generate-data.sh
    ```
 
-   This script will prompt you for various parameters to customize the data generation process.
+   This script will prompt you for various parameters to customize the data generation process. The default values will generate ~1.5M comments. Using the Standard plan database defined in the Blueprint, this script should take ~40s to run. If you choose larger numbers than the default, the insertion process may take some time. Please be patient and allow the script to complete its execution.
 
-3. Follow the prompts in the `generate-data.sh` script to specify the amount and distribution of data you want to generate. Here are the exact questions you'll be asked, along with sample values that will generate approximately 1,000 users, 25,000 articles, and 13 million comments, which match the test values we used for the query plans/timings in the blog post:
+3. After generating the data, run the `delete.sh` script to select and delete a user with many related records:
+
+   ```
+   ./delete.sh
+   ```
+
+   This script will find the user with the most articles that have comments, and perform a cascade delete. The deletion process should be relatively slow due to the lack of indexes (~3s using the Standard plan database and the default values for the `generate-data.sh` script). Note the execution time for comparison.
+
+4. Now, apply the indexes by running the `create-index.sh` script:
+
+   ```
+   ./create-index.sh
+   ```
+
+5. Run the `delete.sh` script again:
+
+   ```
+   ./delete.sh
+   ```
+
+   This time, the deletion process should be significantly faster (potentially orders of magnitude) due to the presence of indexes. Compare the execution time with the previous run to see the dramatic improvement (~200ms using the Standard plan database and the default values for the `generate-data.sh` script). Note that this improvement increasingly drastic as the number of comments increase.
+
+By comparing the execution times and EXPLAIN ANALYZE output from the two runs of `delete.sh`, you can observe the dramatic performance improvement that proper indexing can provide for cascade delete operations in a relational database.
+
+### Reproducing the blog post
+
+The blog post used inputs to generate approximately 1k users, 25k articles, and 13M comments. To reproduce this scale, you can use the following inputs on the `generate-data.sh` invocation:
 
    - How many users would you like to insert? [1000]: 1000
    - What percentage of the 1000 users should be active authors? [10]: 100
@@ -55,28 +81,4 @@ The following steps will create a test schema, generate fake data, and run a spe
    - What should be the standard deviation for the number of comments per article? [2]: 100
    - What's the maximum number of comments an article can have? [10]: 1000
 
-   The insertion process might take a while for larger insertions. With the sample values provided above, inserting the comments (approximately 13 million rows) takes just over 3 minutes and consumes ~3GB of disk space. Please be patient and allow the script to complete its execution.
-
-4. After generating the data, run the `delete.sh` script to select and delete a user with many related records:
-
-   ```
-   ./delete.sh
-   ```
-
-   This script will find the user with the most articles that have comments, and perform a cascade delete. The deletion process should be relatively slow due to the lack of indexes. Note the execution time for comparison.
-
-5. Now, apply the indexes by running the `create-index.sh` script:
-
-   ```
-   ./create-index.sh
-   ```
-
-6. Run the `delete.sh` script again:
-
-   ```
-   ./delete.sh
-   ```
-
-   This time, the deletion process should be significantly faster (potentially orders of magnitude) due to the presence of indexes. Compare the execution time with the previous run to see the dramatic improvement.
-
-By comparing the execution times and EXPLAIN ANALYZE output from the two runs of `delete.sh`, you can observe the dramatic performance improvement that proper indexing can provide for cascade delete operations in a relational database.
+The other steps remain the same.
