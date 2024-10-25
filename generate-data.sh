@@ -11,7 +11,7 @@ check_and_confirm() {
     local table_name="$1"
     local count
     count=$(execute_sql "SELECT COUNT(*) FROM $table_name;" "Counting rows in $table_name" | extract_single_numeric_result)
-    
+
     if [[ "$count" =~ ^[0-9]+$ ]] && [ "$count" -gt 0 ]; then
         echo "The $table_name table already contains $count rows."
         echo "Note: Running create-schema.sh will clear all existing data if you want to start fresh."
@@ -27,18 +27,13 @@ check_and_confirm() {
 }
 
 SQL_HELPER_FUNCTIONS="
-CREATE OR REPLACE FUNCTION normal_rand() RETURNS double precision
-AS \$\$ 
-BEGIN 
-    RETURN sqrt(-2 * ln(random())) * cos(2 * pi() * random()); 
-END; 
-\$\$ LANGUAGE plpgsql;
+CREATE EXTENSION IF NOT EXISTS tablefunc;
 
 CREATE OR REPLACE FUNCTION clamp(value NUMERIC, min_value NUMERIC, max_value NUMERIC) RETURNS NUMERIC
-AS \$\$ 
-BEGIN 
-    RETURN GREATEST(min_value, LEAST(max_value, value)); 
-END; 
+AS \$\$
+BEGIN
+    RETURN GREATEST(min_value, LEAST(max_value, value));
+END;
 \$\$ LANGUAGE plpgsql IMMUTABLE;
 "
 execute_sql "$SQL_HELPER_FUNCTIONS" "Creating helper functions" > /dev/null
@@ -96,7 +91,7 @@ if check_and_confirm "articles"; then
     user_article_counts AS (
         SELECT
             user_id,
-            clamp((normal_rand() * $ARTICLES_PER_AUTHOR_STDDEV)::integer + $ARTICLES_PER_AUTHOR_MEAN, 0, $ARTICLES_PER_AUTHOR_MAX) AS article_count
+            clamp(normal_rand(1, $ARTICLES_PER_AUTHOR_MEAN, $ARTICLES_PER_AUTHOR_STDDEV)::integer, 0, $ARTICLES_PER_AUTHOR_MAX) AS article_count
         FROM active_authors
     ),
     inserted AS (
@@ -124,7 +119,7 @@ if check_and_confirm "comments"; then
     COMMENTS_PER_ARTICLE_STDDEV=$(get_input "What should be the standard deviation for the number of comments per article?" 25)
     COMMENTS_PER_ARTICLE_MAX=$(get_input "What's the maximum number of comments an article can have?" $((2 * COMMENTS_PER_ARTICLE_MEAN)))
     echo ""
-    
+
     # Estimate the number of comments to be inserted
     TOTAL_ARTICLES=$(execute_sql "SELECT COUNT(*) FROM articles;" "Counting total articles" | extract_single_numeric_result)
     ESTIMATED_ARTICLES_WITH_COMMENTS=$((TOTAL_ARTICLES * ARTICLES_WITH_COMMENTS_PERCENT / 100))
@@ -144,14 +139,14 @@ if check_and_confirm "comments"; then
     article_comment_counts AS (
         SELECT
             article_id,
-            clamp((normal_rand() * $COMMENTS_PER_ARTICLE_STDDEV)::integer + $COMMENTS_PER_ARTICLE_MEAN, 0, $COMMENTS_PER_ARTICLE_MAX) AS comment_count
+            clamp(normal_rand(1, $COMMENTS_PER_ARTICLE_MEAN, $COMMENTS_PER_ARTICLE_STDDEV)::integer, 0, $COMMENTS_PER_ARTICLE_MAX) AS comment_count
         FROM articles_with_comments
     ),
     comment_assignments AS (
         SELECT c.user_id, a.article_id
         FROM article_comment_counts a
         JOIN LATERAL (
-            SELECT user_id FROM active_commenters 
+            SELECT user_id FROM active_commenters
             ORDER BY random() LIMIT a.comment_count
         ) c ON true
     ),
