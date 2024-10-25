@@ -40,7 +40,7 @@ The following steps will create a test schema, generate fake data, and run a spe
    ./generate-data.sh
    ```
 
-   This script will prompt you for various parameters to customize the data generation process. The default values will generate ~1.5M comments. Using the Standard plan database defined in the Blueprint, this script should take ~40s to run. If you choose larger numbers than the default, the insertion process may take some time. Please be patient and allow the script to complete its execution.
+   This script will prompt you for various parameters to customize the data generation process. The default values will generate ~1.5M comments. Using the database plan defined in the Blueprint, this script should take ~40s to run. If you choose larger numbers than the default, the insertion process may take some time. Please be patient and allow the script to complete its execution.
 
 3. After generating the data, run the `delete.sh` script to select and delete a user with many related records:
 
