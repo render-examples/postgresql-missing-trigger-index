@@ -7,7 +7,7 @@ The issue is that deleting a single record can take an unexpectedly long time, i
 - Deleting this record causes rows in another table to be deleted due to an `ON DELETE CASCADE` constraint
 - You haven't created indexes on the foreign key columns in _both_ the referencing table and the referenced table.
 
-We encourage you to first read about this pitfall in [our blog post](https://render.com/blog/top-cause-slow-queries-postgresql-no-query-log-needed). Then come back here to demo it for yourself.
+We encourage you to first read about this pitfall in [our blog post](https://render.com/blog/postgresql-top-cause-slow-queries). Then come back here to demo it for yourself.
 
 ## Overview
 In this tutorial, you will follow steps to:
@@ -45,7 +45,7 @@ export POSTGRES_CONNECTION_STRING="postgresql://username:password@host:5432/data
 ## 2. Populate the database
 ### 2a. Create the database schema
 
-First, set up the database schema. We will implement the schema described in [the blog post](https://render.com/blog/top-cause-slow-queries-postgresql-no-query-log-needed), with users, articles, and comments.
+First, set up the database schema. We will implement the schema described in [the blog post](https://render.com/blog/postgresql-top-cause-slow-queries), with users, articles, and comments.
 
 Run the `create-schema.sh` script to create the database schema:
 
