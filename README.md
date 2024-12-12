@@ -29,7 +29,7 @@ Otherwise, create a database on Render. For this demo, you'll get best results b
    * If you prefer to set up a database using Infrastructure as Code, learn about [Render Blueprints](https://docs.render.com/infrastructure-as-code) and apply the Blueprint that's [located in this repository](./render.yaml).
 2. Once your database is running, locate its [external URL](https://docs.render.com/databases#connecting-with-the-external-url) in the Render dashboard:
 
-<img width=”500” src=”./images/connection.png” />
+    <img width="400" src="./images/connection.png" />
 
 You will use the database URL in the next step.
 
