@@ -1,75 +1,110 @@
-# PostgreSQL Trigger + Missing Index Demonstration
+# Tutorial: Simulate and fix slow delete operations in PostgreSQL
 
-This repository is an interactive demonstration of a performance pitfall common in many PostgreSQL schemas as described in [TODO - BLOG POST LINK - TODO](TODO).
+This repo contains code that lets you simulate and fix a common performance issue in PostgreSQL schemas.
 
-TL;DR: The deletion of a record that can cascade over other tables can take an unintuitive amount of time if there are no indexes on foreign key relationships **in both directions**. This repository contains scripts to create a sample schema and generate enough data to show the contrast in performance with and without these indexes.
+The issue is that deleting a single record can take an unexpectedly long time, if:
+- The record you delete is referenced as a foreign key in another table
+- Deleting this record causes rows in another table to be deleted due to an `ON DELETE CASCADE` constraint
+- You haven't created indexes on the foreign key columns in _both_ the referencing table and the referenced table.
+
+We encourage you to first read about this pitfall in [our blog post](https://render.com/blog/top-cause-slow-queries-postgresql-no-query-log-needed). Then come back here to demo it for yourself.
+
+## Overview
+In this tutorial, you will follow steps to:
+1. Create a demo environment with a demo database.
+2. Populate your database with sample data.
+3. Delete a first record. (This deletion will be slow.)
+4. Create indexes, and delete another record. (This deletion will be fast.)
 
 ## Prerequisites
 
-- `psql` command-line tool available in your system's PATH
+- Install the `psql` command-line tool on the machine where you will run the scripts in this demo. (You can run this demo on your local machine, such as a laptop.)
 
-## Configuring your instance
+## 1. Set up a demo environment
+### 1a. Create a demo database
+If you already have a database you can use for demo purposes, feel free to use that instead of creating a new instance. Identify the URL of this database.
 
-Set connection string pointing to your target PostgreSQL instance as an environment variable:
+Otherwise, create a database on Render. You can use Render's free plan.
+1. [Follow this guide](https://docs.render.com/databases#create-your-database) to create a database through the Render dashboard.
+   * If you prefer to set up a database using Infrastructure as Code, learn about [Render Blueprints](https://docs.render.com/infrastructure-as-code) and apply the Blueprint that's [located in this repository](./render.yaml).
+2. Once your database is running, locate its [external URL](https://docs.render.com/databases#connecting-with-the-external-url) in the Render dashboard:
+
+<img width=”500” src=”./images/connection.png” />
+
+You will use the database URL in the next step.
+
+### 1b. Configure local environment variable
+
+On your local machine (or, wherever you plan to run this demo), set the `POSTGRES_CONNECTION_STRING` environment variable to be your database URL. This is the URL from `Step 1a`.
+
+To set the environment variable, run the following line in a terminal—but replace the dummy value here with your PostgreSQL URL from `Step 1a`:
+```
+export POSTGRES_CONNECTION_STRING="postgresql://username:password@host:5432/database_name"
+```
+
+## 2. Populate the database
+### 2a. Create the database schema
+
+First, set up the database schema. We will implement the schema described in [the blog post](https://render.com/blog/top-cause-slow-queries-postgresql-no-query-log-needed), with users, articles, and comments.
+
+Run the `create-schema.sh` script to create the database schema:
 
 ```
-export POSTGRES_CONNECTION_STRING="postgresql://username:password@localhost:5432/database_name"
+./create-schema.sh
 ```
 
-If you are running a database locally, replace the values of `username`, `password`, `localhost`, `5432`, and `database_name` with your actual PostgreSQL connection details.
+Note: If the target tables already exist, running this script will drop and recreate those tables.
 
-You can also spin up a test PostgreSQL instance on Render using the [Blueprint](https://docs.render.com/infrastructure-as-code) [defined in this repository](./render.yaml). You can then find the connection string for that instance in the connection widget:
+### 2b. Generate sample data
 
-![Finding the connection string](./images/connection.png)
+Run the `generate-data.sh` script to populate the tables with sample data:
 
-## Running the simulation
+```
+./generate-data.sh
+```
 
-The following steps will create a test schema, generate fake data, and run a specific deletion with and without an index.
+This script will prompt you for parameters to customize the data it generates. Note that:
+- By default, this script will generate ~1.5M comments. If you use the database plan defined in [the Blueprint in this repo](./render.yaml), this script should take ~40s to run.
+- If you choose to generate more comments, the script will take longer to run.
 
-1. Run the `create-schema.sh` script to create the database schema:
+## 3. Delete a record (slow performance)
 
-   ```
-   ./create-schema.sh
-   ```
+Run the `delete.sh` script. Running this script will select and delete a user with many related records.
 
-   If the target tables already exist, they will be dropped and recreated.
+```
+./delete.sh
+```
 
-2. After the schema is created successfully, run the `generate-data.sh` script to populate the tables with sample data:
+This script finds the user with the most articles and comments, and deletes the user. Deleting this user triggers a cascade of deletes in articles and comments.
 
-   ```
-   ./generate-data.sh
-   ```
+The deletion should be relatively slow due to the lack of indexes. Note the execution time. Our goal is to speed this up.
 
-   This script will prompt you for various parameters to customize the data generation process. The default values will generate ~1.5M comments. Using the database plan defined in the Blueprint, this script should take ~40s to run. If you choose larger numbers than the default, the insertion process may take some time. Please be patient and allow the script to complete its execution.
+## 4. Fix the performance problem
+### 4a. Create indexes
+Now, create the missing foreign key indexes by running the `create-index.sh` script:
 
-3. After generating the data, run the `delete.sh` script to select and delete a user with many related records:
+```
+./create-index.sh
+```
 
-   ```
-   ./delete.sh
-   ```
-
-   This script will find the user with the most articles that have comments, and perform a cascade delete. The deletion process should be relatively slow due to the lack of indexes (~3s using the Standard plan database and the default values for the `generate-data.sh` script). Note the execution time for comparison.
-
-4. Now, apply the indexes by running the `create-index.sh` script:
-
-   ```
-   ./create-index.sh
-   ```
-
+### 4b. Delete a record (fast performance)
 5. Run the `delete.sh` script again:
 
-   ```
-   ./delete.sh
-   ```
+```
+./delete.sh
+```
 
-   This time, the deletion process should be significantly faster (potentially orders of magnitude) due to the presence of indexes. Compare the execution time with the previous run to see the dramatic improvement (~200ms using the Standard plan database and the default values for the `generate-data.sh` script). Note that this improvement increasingly drastic as the number of comments increase.
+This time, the deletion process should be significantly faster (potentially orders of magnitude) due to the indexes.
 
-By comparing the execution times and EXPLAIN ANALYZE output from the two runs of `delete.sh`, you can observe the dramatic performance improvement that proper indexing can provide for cascade delete operations in a relational database.
+Compare the execution time of this deletion with the previous run to see the improvement.
 
-### Reproducing the blog post
+Note that this improvement increases as the number of comments increase!
 
-The blog post used inputs to generate approximately 1k users, 25k articles, and 13M comments. To reproduce this scale, you can use the following inputs on the `generate-data.sh` invocation:
+## How to reproduce the blog post demo
+By default, the script in this repo generates ~1.5M comments. In contrast, the demo in the blog post used 13M comments (as well as ~1k users and 25k articles).
 
+If you'd like to reproduce the larger-scale scenario in the blog post, use the following inputs when you run `generate-data.sh`:
+```
    - How many users would you like to insert? [1000]: 1000
    - What percentage of the 1000 users should be active authors? [10]: 100
    - On average, how many articles should each active author write? [25]: 25
@@ -80,5 +115,4 @@ The blog post used inputs to generate approximately 1k users, 25k articles, and 
    - On average, how many comments should each article with comments have? [5]: 520
    - What should be the standard deviation for the number of comments per article? [2]: 100
    - What's the maximum number of comments an article can have? [10]: 1000
-
-The other steps remain the same.
+```
