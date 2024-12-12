@@ -24,7 +24,7 @@ In this tutorial, you will follow steps to:
 ### 1a. Create a demo database
 If you already have a database you can use for demo purposes, feel free to use that instead of creating a new instance. Identify the URL of this database.
 
-Otherwise, create a database on Render. You can use Render's free plan.
+Otherwise, create a database on Render. For this demo, you'll get best results by using a paid instance on Render. We recommend using the `basic-1gb` database tier.
 1. [Follow this guide](https://docs.render.com/databases#create-your-database) to create a database through the Render dashboard.
    * If you prefer to set up a database using Infrastructure as Code, learn about [Render Blueprints](https://docs.render.com/infrastructure-as-code) and apply the Blueprint that's [located in this repository](./render.yaml).
 2. Once your database is running, locate its [external URL](https://docs.render.com/databases#connecting-with-the-external-url) in the Render dashboard:
