@@ -45,7 +45,7 @@ export POSTGRES_CONNECTION_STRING="postgresql://username:password@host:5432/data
 ## 2. Populate the database
 ### 2a. Create the database schema
 
-First, set up the database schema. We will implement the schema described in [the blog post](https://render.com/blog/top-cause-slow-queries-postgresql-no-query-log-needed), with users, articles, and comments.
+First, set up the database schema. We will implement the schema described in [the blog post](https://render.com/blog/postgresql-top-cause-slow-queries), with users, articles, and comments.
 
 Run the `create-schema.sh` script to create the database schema:
 
